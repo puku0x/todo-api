@@ -12,10 +12,10 @@ app.use(cors);
 /**
  * Create todo
  */
-app.post('/v1/todos', (req, res) => {
+app.post('/todos', (req, res) => {
     let todosRef = admin.database().ref('todos');
     const data = req.body;
-    const timestamp = new Date().getTime()
+    const timestamp = new Date().getTime();
     let todo = {
         text: data.text,
         checked: false,
@@ -32,9 +32,9 @@ app.post('/v1/todos', (req, res) => {
 /**
  * Find todos
  */
-app.get('/v1/todos', (req, res) => {
-    let todosRef = admin.database().ref('todos').orderByChild('createdAt');
-    todosRef.once('value', snapshots => {
+app.get('/todos', (req, res) => {
+    let channelsRef = admin.database().ref('todos').orderByChild('createdAt');
+    channelsRef.once('value', snapshots => {
         let items = [];
         snapshots.forEach(snapshot => {
             let todo = snapshot.val();
@@ -49,7 +49,7 @@ app.get('/v1/todos', (req, res) => {
 /**
  * Find todo
  */
-app.get('/v1/todos/:id', (req, res) => {
+app.get('/todos/:id', (req, res) => {
     let id = req.params.id;
     let todoRef = admin.database().ref(`todos/${id}`);
     todoRef.once('value', snapshot => {
@@ -63,34 +63,32 @@ app.get('/v1/todos/:id', (req, res) => {
 /**
  * Update todo
  */
-app.put('/v1/todos/:id', (req, res) => {
+app.put('/todos/:id', (req, res) => {
     let id = req.params.id;
     let data = req.body;
+    const timestamp = new Date().getTime();
     let todoRef = admin.database().ref(`todos/${id}`);
     todoRef.once('value', snapshot => {
-        let todo = Object.assign(snapshot.val(), data);
-        todo.updatedAt = new Date().getTime();
-        todoRef.update(todo, s => {
-            todo.id = id;
-            res.header('Content-Type', 'application/json; charset=utf-8');
-            res.status(200).send(todo);
-        });
+        let todo = snapshot.val();
+        todo.text = data.text;
+        todo.updatedAt = timestamp;
+        todoRef.update(todo);
+        res.header('Content-Type', 'application/json; charset=utf-8');
+        res.status(200).send(todo);
     });
 });
 
 /**
  * Delete todo
  */
-app.delete('/v1/todos/:id', (req, res) => {
+app.delete('/todos/:id', (req, res) => {
     let id = req.params.id;
     let todoRef = admin.database().ref(`todos/${id}`);
-    todoRef.remove(() => {
+    todoRef.once('value', snapshot => {
+        todoRef.remove();
         res.header('Content-Type', 'application/json; charset=utf-8');
         res.status(200).json({ result: 'ok' });
     });
 });
 
-const main = express();
-main.use('/api', app);
-
-exports.main = functions.https.onRequest(main);
+exports.v1 = functions.https.onRequest(app);
