@@ -25,7 +25,7 @@ interface Todo {
  * Create todo
  */
 app.post('/todos', async (req, res) => {
-    const todosRef = admin.database().ref('todos');
+    const todosRef = admin.firestore().collection('todos');
     const data = req.body;
     const timestamp = new Date().getTime();
     const todo: Todo = {
@@ -34,8 +34,8 @@ app.post('/todos', async (req, res) => {
         createdAt: timestamp,
         updatedAt: timestamp,
     };
-    const snapshot = await todosRef.push(todo);
-    todo.id = snapshot.key;
+    const snapshot = await todosRef.add(todo);
+    todo.id = snapshot.id;
     res.header('Content-Type', 'application/json; charset=utf-8');
     res.status(201).send(todo);
 });
@@ -44,14 +44,13 @@ app.post('/todos', async (req, res) => {
  * Find todos
  */
 app.get('/todos', async (req, res) => {
-    const todosRef = admin.database().ref('todos').orderByChild('createdAt');
-    const snapshot = await todosRef.once('value');
+    const todosRef = admin.firestore().collection('todos').orderBy('createdAt');
+    const snapshot = await todosRef.get();
     const items = [];
     snapshot.forEach(child => {
-        const todo = child.val();
-        todo.id = child.key;
+        const todo = child.data() as Todo;
+        todo.id = child.id;
         items.push(todo);
-        return false;
     });
     res.header('Content-Type', 'application/json; charset=utf-8');
     res.send(items);
@@ -62,10 +61,10 @@ app.get('/todos', async (req, res) => {
  */
 app.get('/todos/:id', async (req, res) => {
     const id = req.params.id;
-    const todoRef = admin.database().ref(`todos/${id}`);
-    const snapshot = await todoRef.once('value');
-    const todo = snapshot.val();
-    todo.id = snapshot.key;
+    const todoRef = admin.firestore().collection('todos').doc(id);
+    const snapshot = await todoRef.get();
+    const todo = snapshot.data();
+    todo.id = snapshot.id;
     res.header('Content-Type', 'application/json; charset=utf-8');
     res.status(200).send(todo);
 });
@@ -77,13 +76,13 @@ app.put('/todos/:id', async (req, res) => {
     const id: string = req.params.id;
     const data = req.body;
     const timestamp = new Date().getTime();
-    const todoRef = admin.database().ref(`todos/${id}`);
-    const snapshot = await todoRef.once('value');
-    const todo: Todo = snapshot.val();
+    const todoRef = admin.firestore().collection('todos').doc(id);
+    const snapshot = await todoRef.get();
+    const todo: Todo = snapshot.data();
     todo.text = data.text;
     todo.updatedAt = timestamp;
     await todoRef.update(todo);
-    todo.id = snapshot.key;
+    todo.id = snapshot.id;
     res.header('Content-Type', 'application/json; charset=utf-8');
     res.status(200).send(todo);
 });
@@ -93,8 +92,8 @@ app.put('/todos/:id', async (req, res) => {
  */
 app.delete('/todos/:id', async (req, res) => {
     const id = req.params.id;
-    const todoRef = admin.database().ref(`todos/${id}`);
-    todoRef.remove();
+    const todoRef = admin.firestore().collection('todos').doc(id);
+    todoRef.delete();
     res.header('Content-Type', 'application/json; charset=utf-8');
     res.status(200).json({ result: 'ok' });
 });
