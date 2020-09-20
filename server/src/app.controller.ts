@@ -6,25 +6,24 @@ import {
   Delete,
   Query,
   Param,
-  Body
+  Body,
 } from '@nestjs/common';
 
-import { Todo } from './todo.model';
+import { TodoCreateDto, TodoUpdateDto } from './models';
 import { TodoService } from './todo.service';
 
 @Controller('todos')
-export class TodoController {
+export class AppController {
   constructor(private readonly todoService: TodoService) {}
 
   @Post()
-  async create(@Body() todo: Partial<Todo>) {
+  async create(@Body() todo: TodoCreateDto) {
     return await this.todoService.create(todo);
   }
 
   @Get()
-  async findAll(@Query() query: { offset: number; limit: number }) {
-    const { offset, limit } = query;
-    return await this.todoService.findAll(offset, limit);
+  async findAll(@Query('offset') offset = '0', @Query('limit') limit = '10') {
+    return await this.todoService.findAll(+offset, +limit);
   }
 
   @Get(':id')
@@ -33,7 +32,7 @@ export class TodoController {
   }
 
   @Put(':id')
-  async uodate(@Param('id') id: string, @Body() todo: Todo) {
+  async uodate(@Param('id') id: string, @Body() todo: TodoUpdateDto) {
     return await this.todoService.update(id, todo);
   }
 
