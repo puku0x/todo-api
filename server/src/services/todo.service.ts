@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 
-import { Todo, TodoCreateDto, TodoUpdateDto } from './models';
+import { sortObjectByKeys } from '../utils'
+import { Todo, TodoCreateDto, TodoUpdateDto } from '../models';
 
 @Injectable()
 export class TodoService {
@@ -15,10 +16,10 @@ export class TodoService {
       updatedAt: timestamp,
     };
     const snapshot = await todosRef.add(data);
-    return {
+    return sortObjectByKeys({
       ...data,
       id: snapshot.id,
-    };
+    });
   }
 
   async findAll(offset: number, limit: number): Promise<Todo[]> {
@@ -39,7 +40,7 @@ export class TodoService {
       });
     });
 
-    return todos;
+    return todos.map(sortObjectByKeys);
   }
 
   async findOne(id: string): Promise<Todo> {
@@ -49,10 +50,10 @@ export class TodoService {
       .doc(id);
     const snapshot = await todoRef.get();
     const data = snapshot.data() as Todo;
-    return {
+    return sortObjectByKeys({
       ...data,
       id: snapshot.id,
-    };
+    });
   }
 
   async update(id: string, todo: TodoUpdateDto): Promise<Todo> {
@@ -71,7 +72,7 @@ export class TodoService {
       updatedAt: timestamp,
     };
     await todoRef.update(updateData);
-    return updateData;
+    return sortObjectByKeys(updateData);
   }
 
   async remove(id: string): Promise<void> {
