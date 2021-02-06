@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 
-import { TodoService } from './todo.service';
+import { TodoService } from './services';
 
 @Module({
   imports: [],

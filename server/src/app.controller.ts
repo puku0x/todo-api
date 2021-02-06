@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 
 import { TodoCreateDto, TodoUpdateDto } from './models';
-import { TodoService } from './todo.service';
+import { TodoService } from './services';
 
 @Controller('todos')
 export class AppController {
